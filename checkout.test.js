@@ -59,6 +59,11 @@ test('ignores browser-supplied price and creates Shopify draft from fresh Mercar
   assert.equal(res.statusCode, 200);
   assert.equal(sentInput.lineItems[0].originalUnitPriceWithCurrency.amount, '6110');
   assert.equal(sentInput.lineItems[0].quantity, 2);
+  assert.equal(sentInput.lineItems[0].requiresShipping, true);
+  assert.deepEqual(sentInput.shippingLine, {
+    title: '日本至台灣國際運費抵台後另收',
+    priceWithCurrency: { amount: '0', currencyCode: 'TWD' }
+  });
   assert.equal(res.body.currency, 'TWD');
 });
 
