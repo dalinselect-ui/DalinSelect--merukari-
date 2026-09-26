@@ -6,11 +6,23 @@
       "use": "@vercel/node"
     },
     {
+      "src": "checkout.js",
+      "use": "@vercel/node"
+    },
+    {
       "src": "index.html",
       "use": "@vercel/static"
     },
     {
+      "src": "order.html",
+      "use": "@vercel/static"
+    },
+    {
       "src": "app.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "order.js",
       "use": "@vercel/static"
     },
     {
@@ -22,6 +34,10 @@
     {
       "src": "/api/quote",
       "dest": "/quote.js"
+    },
+    {
+      "src": "/api/checkout",
+      "dest": "/checkout.js"
     },
     {
       "src": "/",
