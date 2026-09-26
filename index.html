@@ -1,1 +1,46 @@
-<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>DalinSelect Mercari 代購</title><link rel="stylesheet" href="style.css"></head><body><main><header><div class="mark">✦</div><div><b>DalinSelect</b><small>日本 Mercari 代購</small></div></header><section class="hero"><span>JAPAN → TAIWAN</span><h1>貼上 Mercari 連結<br>立即取得代購報價</h1><p>輸入日本 Mercari 商品網址，系統會嘗試讀取商品資料並計算台幣價格。</p><form id="form"><input id="url" type="url" placeholder="https://jp.mercari.com/item/m..." required><button>立即報價</button></form><div class="hint">目前測試費率：商品價格 × 0.24 ＋ DalinSelect 服務費</div></section><section id="result"></section></main><script src="app.js"></script></body></html>
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="貼上日本 Mercari 商品連結，即時確認價格與販售狀態，取得台幣代購報價。">
+  <title>日本 Mercari 代購報價｜DalinSelect</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <header class="site-header">
+      <a class="brand" href="/"><span class="brand-mark">✦</span><span><strong>DalinSelect</strong><small>日本代購 · Mercari</small></span></a>
+      <span class="header-note">JAPAN → TAIWAN</span>
+    </header>
+
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="eyebrow">把喜歡的日本商品，安心帶回家</div>
+      <h1 id="hero-title">在 Mercari 找到了？<br><em>先確認價格，再決定下單。</em></h1>
+      <p>貼上商品連結，我們會查詢該商品的價格與販售狀態，換算成台幣報價。</p>
+      <form id="form" class="quote-form">
+        <label class="sr-only" for="url">Mercari 商品網址</label>
+        <input id="url" name="url" type="url" inputmode="url" placeholder="貼上 Mercari 商品網址" autocomplete="url" required>
+        <button type="submit">查看報價 <span aria-hidden="true">→</span></button>
+      </form>
+      <p class="microcopy">即時資料可能變動。只有確認商品價格與販售狀態後，才會顯示報價。</p>
+    </section>
+
+    <section id="result" class="result" aria-live="polite"></section>
+
+    <section class="trust-strip" aria-label="下單流程">
+      <div><span>01</span><strong>貼上商品</strong><small>使用原始 Mercari 連結</small></div>
+      <div><span>02</span><strong>確認報價</strong><small>查看商品價格與代購費</small></div>
+      <div><span>03</span><strong>Shopify 結帳</strong><small>付款功能開通後可線上付款</small></div>
+    </section>
+
+    <section class="details-grid">
+      <div class="detail-card"><span class="detail-icon">⌁</span><h2>價格說清楚</h2><p>先付商品與代購服務費；商品到台灣後，再依實際國際運費另行收款。</p></div>
+      <div class="detail-card"><span class="detail-icon">✓</span><h2>狀態先確認</h2><p>商品已售出、已刪除或資料不完整時，不會顯示猜測的價格。</p></div>
+      <div class="detail-card"><span class="detail-icon">↗</span><h2>熟悉的結帳流程</h2><p>可付款時會前往 Shopify 結帳頁；已登入的顧客可使用帳號資訊。</p></div>
+    </section>
+    <footer>© DalinSelect <span>日本 Mercari 代購</span></footer>
+  </main>
+  <script src="/app.js" defer></script>
+</body>
+</html>
