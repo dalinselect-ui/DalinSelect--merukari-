@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="description" content="核對 Mercari 代購商品與台幣報價，然後前往 Shopify 安全結帳。">
+  <title>確認下單｜DalinSelect</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+  <main>
+    <header class="site-header">
+      <a class="brand" href="/"><span class="brand-mark">✦</span><span><strong>DalinSelect</strong><small>日本代購 · Mercari</small></span></a>
+      <span class="header-note">安全結帳</span>
+    </header>
+    <a class="back-link" href="/">← 返回報價</a>
+    <section class="order-heading">
+      <div class="eyebrow">CHECK YOUR ORDER</div>
+      <h1>確認商品，<em>準備下單。</em></h1>
+      <p>我們會在開啟 Shopify 結帳前重新確認價格與販售狀態。</p>
+    </section>
+    <div id="order-state" aria-live="polite"></div>
+    <section class="order-note">
+      <h2>付款前再看一眼</h2>
+      <p>Mercari 商品可能隨時售出或變價。Shopify 結帳頁會顯示最終應付金額，完成付款後訂單才會成立。</p>
+      <p>已有 Shopify 帳號的顧客可在結帳時登入，使用帳號中保存的資訊；若資料缺少或失效，Shopify 仍可能要求補上。</p>
+    </section>
+  </main>
+  <script src="/order.js" defer></script>
+</body>
+</html>
