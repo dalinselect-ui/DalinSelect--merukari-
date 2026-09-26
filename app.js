@@ -32,7 +32,7 @@ function renderQuote(item) {
   content.append(priceRow('商品換算（× ' + item.rate + '）', 'NT$' + money(item.itemTwd)));
   content.append(priceRow('代購服務費', 'NT$' + money(item.fee)));
   content.append(priceRow('商品＋服務費', 'NT$' + money(item.total), true));
-  content.append(node('p', 'price-note', '日本至台灣國際運費另計；付款前請核對收費說明。'));
+  content.append(node('p', 'price-note', '這次先付商品與代購服務費；商品到台灣後，再依實際國際運費另行收款。'));
   const link = node('a', 'button button-primary', '確認商品並前往下單 →');
   link.href = '/order.html?url=' + encodeURIComponent(item.url);
   content.append(link);
