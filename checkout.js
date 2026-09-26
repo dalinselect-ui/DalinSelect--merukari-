@@ -45,7 +45,13 @@ export default async function handler(req, res) {
         { key: "Mercari JPY price", value: String(item.yen) }
       ]
     }],
-    note: "Mercari 代購；下單時重新查價。商品與服務費已含於單價；日本至台灣國際運費另計。來源：" + item.url,
+    // Keep this checkout at the quoted item-and-service price. The actual
+    // Japan-to-Taiwan shipping charge is invoiced separately after arrival.
+    shippingLine: {
+      title: "日本至台灣國際運費抵台後另收",
+      priceWithCurrency: { amount: "0", currencyCode: "TWD" }
+    },
+    note: "Mercari 代購；下單時重新查價。這次只收商品與服務費；商品到台灣後依實際國際運費另行收款。來源：" + item.url,
     tags: "Mercari,代購"
   };
 
