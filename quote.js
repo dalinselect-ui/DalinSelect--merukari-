@@ -65,29 +65,34 @@ function quote(yen) {
   return { rate: 0.24, itemTwd, fee, total: itemTwd + fee };
 }
 
-export default async function handler(req, res) {
-  res.setHeader("Cache-Control", "no-store");
-  if (req.method !== "POST") {
-    res.setHeader("Allow", "POST");
-    return res.status(405).json({ error: "Method not allowed" });
-  }
-  const itemId = parseItemId(String(req.body?.url || "").trim());
-  if (!itemId) return res.status(400).json({ error: "請貼上有效的 Mercari 日本商品網址" });
+export async function fetchQuote(input) {
+  const itemId = parseItemId(String(input || "").trim());
+  if (!itemId) return { status: 400, body: { error: "請貼上有效的 Mercari 日本商品網址" } };
   const url = "https://jp.mercari.com/item/" + itemId;
   try {
     const r = await fetch(url, {
       headers: { "user-agent": "Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)", "accept-language": "ja-JP,ja;q=0.9" },
       redirect: "error", cache: "no-store", signal: AbortSignal.timeout(15000)
     });
-    if (r.status === 404 || r.status === 410) return res.status(422).json({ error: "無法報價：商品已刪除或不存在", itemId, status: "unknown" });
+    if (r.status === 404 || r.status === 410) return { status: 422, body: { error: "無法報價：商品已刪除或不存在", itemId, status: "unknown" } };
     if (!r.ok) throw new Error("Mercari HTTP " + r.status);
     const item = extractItem(await r.text(), itemId);
     if (!item || item.yen === null || item.status === "unknown" || !item.title.trim()) {
-      return res.status(422).json({ error: "無法報價：無法確認此商品的價格與販售狀態，商品可能已刪除或資料暫時無法讀取", itemId, status: "unknown" });
+      return { status: 422, body: { error: "無法報價：無法確認此商品的價格與販售狀態，商品可能已刪除或資料暫時無法讀取", itemId, status: "unknown" } };
     }
-    if (item.status === "sold") return res.status(422).json({ error: "無法報價：此商品已售出或已下架", itemId, status: "sold", sold: true });
-    return res.status(200).json({ itemId, url, ...item, sold: false, ...quote(item.yen) });
+    if (item.status === "sold") return { status: 422, body: { error: "無法報價：此商品已售出或已下架", itemId, status: "sold", sold: true } };
+    return { status: 200, body: { itemId, url, ...item, sold: false, ...quote(item.yen) } };
   } catch {
-    return res.status(502).json({ error: "無法報價：目前無法從 Mercari 取得商品資料，請稍後再試", itemId });
+    return { status: 502, body: { error: "無法報價：目前無法從 Mercari 取得商品資料，請稍後再試", itemId } };
   }
+}
+
+export default async function handler(req, res) {
+  res.setHeader("Cache-Control", "no-store");
+  if (req.method !== "POST") {
+    res.setHeader("Allow", "POST");
+    return res.status(405).json({ error: "Method not allowed" });
+  }
+  const result = await fetchQuote(req.body?.url);
+  return res.status(result.status).json(result.body);
 }
