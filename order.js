@@ -49,7 +49,7 @@ function renderOrder(item, checkoutEnabled) {
   select.addEventListener('change', updateTotal);
   updateTotal();
   const breakdown = node('div', 'order-breakdown');
-  breakdown.append(unit, total, node('p', 'price-note', '日本至台灣國際運費另計；請在付款前核對 Shopify 結帳頁的金額與條款。'));
+  breakdown.append(unit, total, node('p', 'price-note', '這次只付商品與代購服務費。商品到台灣後，再依實際國際運費另行收款；付款前請核對 Shopify 結帳金額。'));
   card.append(breakdown);
 
   if (checkoutEnabled) {
