@@ -1,34 +1,16 @@
 {
   "version": 2,
   "builds": [
-    {
-      "src": "quote.js",
-      "use": "@vercel/node"
-    },
-    {
-      "src": "index.html",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "app.js",
-      "use": "@vercel/static"
-    },
-    {
-      "src": "style.css",
-      "use": "@vercel/static"
-    }
+    { "src": "quote.js", "use": "@vercel/node" },
+    { "src": "purchase.js", "use": "@vercel/node" },
+    { "src": "index.html", "use": "@vercel/static" },
+    { "src": "app.js", "use": "@vercel/static" },
+    { "src": "style.css", "use": "@vercel/static" }
   ],
   "routes": [
-    {
-      "src": "/api/quote",
-      "dest": "/quote.js"
-    },
-    {
-      "src": "/",
-      "dest": "/index.html"
-    },
-    {
-      "handle": "filesystem"
-    }
+    { "src": "/api/quote", "dest": "/quote.js" },
+    { "src": "/api/purchase", "dest": "/purchase.js" },
+    { "src": "/", "dest": "/index.html" },
+    { "handle": "filesystem" }
   ]
 }
