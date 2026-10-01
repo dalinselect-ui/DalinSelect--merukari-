@@ -1,8 +1,9 @@
 import { fetchMercariQuote } from "./quote.js";
+import { getShopifyAccessToken, SHOP, API_VERSION } from "./shopify-auth.js";
 
-const SHOP = process.env.SHOPIFY_STORE_DOMAIN || "dalinselect.myshopify.com";
-const TOKEN = process.env.SHOPIFY_ADMIN_ACCESS_TOKEN;
-const API_VERSION = process.env.SHOPIFY_API_VERSION || "2026-07";
+function purchaseError(message, statusCode = 502, setupRequired = false) {
+  return Object.assign(new Error(message), { statusCode, setupRequired });
+}
 
 function escapeHtml(value) {
   return String(value ?? "")
@@ -14,26 +15,29 @@ function escapeHtml(value) {
 }
 
 async function shopify(query, variables = {}) {
-  if (!TOKEN) {
-    const e = new Error("Shopify 尚未完成安全連線設定");
-    e.statusCode = 503;
-    e.setupRequired = true;
-    throw e;
+  const token = await getShopifyAccessToken();
+  let r;
+  try {
+    r = await fetch(`https://${SHOP}/admin/api/${API_VERSION}/graphql.json`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-shopify-access-token": token
+      },
+      body: JSON.stringify({ query, variables }),
+      signal: AbortSignal.timeout(20000)
+    });
+  } catch {
+    throw purchaseError("Shopify API 連線逾時或暫時無法使用");
   }
 
-  const r = await fetch(`https://${SHOP}/admin/api/${API_VERSION}/graphql.json`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      "x-shopify-access-token": TOKEN
-    },
-    body: JSON.stringify({ query, variables }),
-    signal: AbortSignal.timeout(20000)
-  });
-
   const body = await r.json().catch(() => null);
-  if (!r.ok || !body) throw new Error("Shopify API 暫時無法使用");
-  if (body.errors?.length) throw new Error(body.errors.map(x => x.message).join("；"));
+  if (r.status === 401 || r.status === 403) {
+    throw purchaseError("Shopify 授權失敗，請檢查 App 安裝與權限", 503, true);
+  }
+  if (!r.ok || !body) throw purchaseError("Shopify API 暫時無法使用");
+  if (body.errors?.length) throw purchaseError(body.errors.map(x => x.message).join("；"));
+  if (!body.data) throw purchaseError("Shopify API 未回傳有效資料");
   return body.data;
 }
 
@@ -42,52 +46,90 @@ function userErrors(payload) {
 }
 
 function assertNoErrors(payload) {
+  if (!payload) throw purchaseError("Shopify API 未回傳操作結果");
   const errors = userErrors(payload);
   if (errors.length) throw new Error(errors.map(x => x.message).join("；"));
 }
 
-async function findExisting(handle) {
+async function findExisting(handle, locationId) {
   const data = await shopify(`
-    query ExistingMercariProduct($handle: String!) {
+    query ExistingMercariProduct($handle: String!, $locationId: ID!) {
       productByHandle(handle: $handle) {
         id
         handle
         status
-        variants(first: 1) { nodes { id } }
+        variants(first: 2) { nodes {
+          id
+          price
+          inventoryPolicy
+          inventoryItem {
+            tracked
+            sku
+            inventoryLevel(locationId: $locationId) {
+              quantities(names: ["available"]) { name quantity }
+            }
+          }
+        } }
       }
     }
-  `, { handle });
+  `, { handle, locationId });
   return data.productByHandle || null;
 }
 
 async function getOnlineStorePublicationAndLocation() {
   const data = await shopify(`
     query PurchaseSetup {
-      publications(first: 20) { nodes { id name } }
-      locations(first: 20, query: "active:true") { nodes { id name } }
+      shop { currencyCode }
+      publications(first: 250) { nodes { id name } }
+      locations(first: 250, query: "active:true") { nodes { id isActive fulfillsOnlineOrders } }
     }
   `);
 
-  const publication = data.publications.nodes.find(x => x.name === "Online Store") || data.publications.nodes[0];
-  const location = data.locations.nodes[0];
-  if (!publication) throw new Error("找不到 Shopify Online Store 銷售管道");
-  if (!location) throw new Error("找不到可用的 Shopify 庫存地點");
+  if (data.shop?.currencyCode !== "TWD") {
+    throw purchaseError("報價以台幣計算，Shopify 商店幣別必須為 TWD", 503, true);
+  }
+  const publication = data.publications.nodes.find(x => x.name === "Online Store");
+  const location = data.locations.nodes.find(x => x.isActive && x.fulfillsOnlineOrders);
+  if (!publication) throw purchaseError("找不到 Shopify Online Store 銷售管道", 503, true);
+  if (!location) throw purchaseError("找不到可處理網路訂單的 Shopify 庫存地點", 503, true);
   return { publicationId: publication.id, locationId: location.id };
+}
+
+async function publishProduct(id, publicationId) {
+  const published = await shopify(`
+    mutation PublishMercariProduct($id: ID!, $publicationId: ID!) {
+      publishablePublish(id: $id, input: [{ publicationId: $publicationId }]) {
+        userErrors { field message }
+      }
+    }
+  `, { id, publicationId });
+  assertNoErrors(published.publishablePublish);
 }
 
 async function createPurchaseProduct(q) {
   const handle = `mercari-${q.itemId}-${q.total}`;
-  const existing = await findExisting(handle);
-  if (existing?.variants?.nodes?.[0]) {
+  const { publicationId, locationId } = await getOnlineStorePublicationAndLocation();
+  const existing = await findExisting(handle, locationId);
+  if (existing) {
+    const variant = existing.variants?.nodes?.[0];
+    const available = variant?.inventoryItem?.inventoryLevel?.quantities?.find(x => x.name === "available")?.quantity;
+    if (!["ACTIVE", "UNLISTED"].includes(existing.status) ||
+        existing.variants?.nodes?.length !== 1 || !variant?.id ||
+        Number(variant.price) !== q.total || variant.inventoryPolicy !== "DENY" ||
+        !variant.inventoryItem?.tracked || variant.inventoryItem.sku !== `MER-${q.itemId}`) {
+      throw purchaseError("此代購商品先前未完成建立或設定已變更，請聯絡客服處理", 409);
+    }
+    if (!(available > 0)) throw purchaseError("此代購商品目前沒有可購買庫存，請聯絡客服", 409);
+    // Retry publishing after a previous failure without resetting sold inventory.
+    await publishProduct(existing.id, publicationId);
     return {
       productId: existing.id,
       handle: existing.handle,
-      variantId: existing.variants.nodes[0].id,
+      variantId: variant.id,
       reused: true
     };
   }
 
-  const { publicationId, locationId } = await getOnlineStorePublicationAndLocation();
   const descriptionHtml = `
     <p><strong>Dalin Select Mercari 專屬代購商品</strong></p>
     <p>此商品由客人透過報價器確認後建立，價格由伺服器重新核對 Mercari 當下售價後產生。</p>
@@ -167,14 +209,7 @@ async function createPurchaseProduct(q) {
   const variantId = variants.productVariantsBulkCreate.productVariants?.[0]?.id;
   if (!variantId) throw new Error("Shopify 商品規格建立失敗");
 
-  const published = await shopify(`
-    mutation PublishMercariProduct($id: ID!, $publicationId: ID!) {
-      publishablePublish(id: $id, input: [{ publicationId: $publicationId }]) {
-        userErrors { field message }
-      }
-    }
-  `, { id: product.id, publicationId });
-  assertNoErrors(published.publishablePublish);
+  await publishProduct(product.id, publicationId);
 
   return { productId: product.id, handle: product.handle, variantId, reused: false };
 }

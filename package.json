@@ -3,6 +3,10 @@
   "version": "0.3.0",
   "private": true,
   "type": "module",
+  "scripts": {
+    "test": "node --test --test-isolation=none",
+    "check": "node --check purchase.js && node --check shopify-auth.js && node --check quote.js && node --check app.js"
+  },
   "dependencies": {
     "cheerio": "^1.0.0"
   }
