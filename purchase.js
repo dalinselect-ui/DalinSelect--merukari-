@@ -228,8 +228,9 @@ export default async function handler(req, res) {
     const p = await createPurchaseProduct(q);
     const numericVariantId = p.variantId.split("/").pop();
     const productUrl = `https://${SHOP}/products/${p.handle}`;
-    const cartUrl = `https://${SHOP}/cart/${numericVariantId}:1`;
-    const checkoutUrl = `${cartUrl}?checkout`;
+    const cartPermalink = `https://${SHOP}/cart/${numericVariantId}:1`;
+    const cartUrl = `${cartPermalink}?storefront=true`;
+    const checkoutUrl = `${cartPermalink}?checkout`;
 
     return res.status(200).json({
       ok: true,

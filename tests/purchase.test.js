@@ -76,7 +76,7 @@ test("confirm purchase gets OAuth token, requotes, creates priced stocked varian
   assert.equal(res.code, 200);
   assert.equal(res.body.total, 970);
   assert.equal(res.body.productUrl, `https://dalinselect.myshopify.com/products/${handle}`);
-  assert.equal(res.body.cartUrl, "https://dalinselect.myshopify.com/cart/2:1");
+  assert.equal(res.body.cartUrl, "https://dalinselect.myshopify.com/cart/2:1?storefront=true");
   assert.equal(res.body.checkoutUrl, "https://dalinselect.myshopify.com/cart/2:1?checkout");
   assert.equal(res.body.reused, false);
   assert.deepEqual(calls.map(x => x.operation), ["PurchaseSetup", "ExistingMercariProduct", "CreateMercariProduct", "CreateMercariVariant", "PublishMercariProduct"]);
@@ -157,4 +157,3 @@ test("invalid Mercari URL and unsupported methods never call Shopify", async t =
   assert.equal((await request("OPTIONS")).code, 204);
   assert.equal((await request("GET")).code, 405);
 });
-
