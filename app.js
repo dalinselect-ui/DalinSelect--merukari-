@@ -32,10 +32,10 @@ function purchaseReady(x) {
       <h3>${escapeHtml(x.title)}</h3>
       <div class="row total"><span>代購價格</span><span>NT$${money(x.total)}</span></div>
       <div class="purchase-actions">
-        <a class="secondary-action" href="${escapeHtml(x.cartUrl)}">加入購物車</a>
-        <a class="primary-action" href="${escapeHtml(x.checkoutUrl)}">直接購買</a>
+        <a class="secondary-action" target="_top" href="${escapeHtml(x.cartUrl)}">加入購物車</a>
+        <a class="primary-action" target="_top" href="${escapeHtml(x.checkoutUrl)}">直接購買</a>
       </div>
-      <a class="product-link" href="${escapeHtml(x.productUrl)}">查看專屬商品頁面 →</a>
+      <a class="product-link" target="_top" href="${escapeHtml(x.productUrl)}">查看專屬商品頁面 →</a>
     </div>
   `;
 }
