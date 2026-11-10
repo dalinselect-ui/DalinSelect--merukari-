@@ -9,7 +9,7 @@ const { default: handler } = await import("../purchase.js");
 
 const productId = "gid://shopify/Product/1";
 const variantId = "gid://shopify/ProductVariant/2";
-const handle = "mercari-m123-970";
+const handle = "mercari-m123-1000";
 const setup = {
   shop: { currencyCode: "TWD" },
   publications: { nodes: [{ id: "pub-other", name: "Other channel" }, { id: "pub-online", name: "Online Store" }] },
@@ -18,7 +18,7 @@ const setup = {
 function existing(available = 1) {
   return {
     id: productId, handle, status: "UNLISTED",
-    variants: { nodes: [{ id: variantId, price: "970.00", inventoryPolicy: "DENY", inventoryItem: {
+    variants: { nodes: [{ id: variantId, price: "1000.00", inventoryPolicy: "DENY", inventoryItem: {
       tracked: true, sku: "MER-m123", inventoryLevel: { quantities: [{ name: "available", quantity: available }] }
     } }] }
   };
@@ -74,14 +74,14 @@ test("confirm purchase gets OAuth token, requotes, creates priced stocked varian
   const calls = mockApi(t);
   const res = await request();
   assert.equal(res.code, 200);
-  assert.equal(res.body.total, 970);
+  assert.equal(res.body.total, 1000);
   assert.equal(res.body.productUrl, `https://dalinselect.myshopify.com/products/${handle}`);
   assert.equal(res.body.cartUrl, "https://dalinselect.myshopify.com/cart/2:1?storefront=true");
   assert.equal(res.body.checkoutUrl, "https://dalinselect.myshopify.com/cart/2:1?checkout");
   assert.equal(res.body.reused, false);
   assert.deepEqual(calls.map(x => x.operation), ["PurchaseSetup", "ExistingMercariProduct", "CreateMercariProduct", "CreateMercariVariant", "PublishMercariProduct"]);
   const variant = calls[3].variables.variants[0];
-  assert.equal(variant.price, "970");
+  assert.equal(variant.price, "1000");
   assert.equal(variant.inventoryPolicy, "DENY");
   assert.equal(variant.inventoryItem.tracked, true);
   assert.deepEqual(variant.inventoryQuantities, [{ availableQuantity: 1, locationId: "loc-online" }]);

@@ -66,9 +66,11 @@ export function extractItem(html, itemId) {
 }
 
 export function calculateQuote(yen) {
-  const itemTwd = Math.ceil((yen * 0.24) / 10) * 10;
-  const fee = yen <= 2999 ? 150 : yen <= 9999 ? 250 : yen <= 29999 ? 350 : Math.ceil((yen * 0.24 * 0.05) / 10) * 10;
-  return { rate: 0.24, itemTwd, fee, total: itemTwd + fee };
+  const rate = 0.25;
+  const convertedTwd = yen * rate;
+  const itemTwd = Math.ceil(convertedTwd / 10) * 10;
+  const fee = yen <= 2999 ? 150 : yen <= 9999 ? 250 : yen <= 29999 ? 350 : Math.ceil((convertedTwd * 0.05) / 10) * 10;
+  return { rate, itemTwd, fee, total: itemTwd + fee };
 }
 
 export async function fetchMercariQuote(input) {
