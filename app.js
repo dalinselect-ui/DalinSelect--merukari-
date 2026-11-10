@@ -170,9 +170,20 @@ function purchaseReady(x) {
   `;
 }
 
+const btn = form.querySelector('button');
+let quoteRevision = 0;
+
+listingInput.addEventListener('input', () => {
+  quoteRevision++;
+  result.innerHTML = '';
+});
+
 form.addEventListener('submit', async e => {
   e.preventDefault();
-  const btn = form.querySelector('button');
+  if (btn.disabled) return;
+  const url = listingInput.value.trim();
+  const revision = ++quoteRevision;
+  const isCurrentQuote = () => revision === quoteRevision && listingInput.value.trim() === url;
   btn.disabled = true;
   btn.textContent = copy.loading;
   result.innerHTML = '';
@@ -181,14 +192,18 @@ form.addEventListener('submit', async e => {
     const r = await fetch('/api/quote', {
       method: 'POST',
       headers: {'content-type':'application/json'},
-      body: JSON.stringify({url: listingInput.value})
+      body: JSON.stringify({url})
     });
     const x = await r.json();
+    if (!isCurrentQuote()) return;
     if (!r.ok) throw x;
     result.innerHTML = quoteCard(x);
 
-    document.querySelector('#confirm-purchase').addEventListener('click', async () => {
-      const purchaseBtn = document.querySelector('#confirm-purchase');
+    const purchaseBtn = document.querySelector('#confirm-purchase');
+    purchaseBtn.addEventListener('click', async () => {
+      if (!isCurrentQuote() || purchaseBtn.disabled || btn.disabled) return;
+      btn.disabled = true;
+      listingInput.readOnly = true;
       purchaseBtn.disabled = true;
       purchaseBtn.textContent = copy.creating;
 
@@ -199,17 +214,23 @@ form.addEventListener('submit', async e => {
           body: JSON.stringify({url: x.url})
         });
         const p = await pr.json();
+        if (!isCurrentQuote()) return;
         if (!pr.ok) throw p;
         result.insertAdjacentHTML('beforeend', purchaseReady(p));
         purchaseBtn.textContent = copy.done;
       } catch (p) {
+        if (!isCurrentQuote()) return;
         purchaseBtn.disabled = false;
         purchaseBtn.textContent = copy.confirm;
         const extra = p.setupRequired ? `<br><small>${copy.setup}</small>` : '';
         result.insertAdjacentHTML('beforeend', `<div class="error"><b>${copy.purchaseFailed}</b><br>${escapeHtml(errorMessage(p))}${extra}</div>`);
+      } finally {
+        listingInput.readOnly = false;
+        btn.disabled = false;
       }
     });
   } catch (x) {
+    if (!isCurrentQuote()) return;
     result.innerHTML = `<div class="error"><b>${copy.quoteFailed}</b><br>${escapeHtml(errorMessage(x))}${x.itemId ? `<br><small>${copy.itemId}: ${escapeHtml(x.itemId)}</small>` : ''}</div>`;
   } finally {
     btn.disabled = false;
